@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Mathgeekers.GitHub.io by mathGeekers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Mathgeekers.GitHub.io</h1>
+      <h2 class="project-tagline">数学极客博客</h2>
+    </section>
+
+    <section class="main-content">
+      <h3>
+<a id="处理javascript异步编程嵌套回调问题的利器js-promise" class="anchor" href="#%E5%A4%84%E7%90%86javascript%E5%BC%82%E6%AD%A5%E7%BC%96%E7%A8%8B%E5%B5%8C%E5%A5%97%E5%9B%9E%E8%B0%83%E9%97%AE%E9%A2%98%E7%9A%84%E5%88%A9%E5%99%A8js-promise" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>处理JavaScript异步编程嵌套回调问题的利器——js promise</h3>
+
+<h6>
+<a id="by-gauss-from-mathgeeks" class="anchor" href="#by-gauss-from-mathgeeks" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>By Gauss from MathGeeks</h6>
+
+<ul>
+<li>传统的async不能很好的应对需求的变化，即当业务逻辑发生变化时，需要大幅度的修改原有的代码结构，promise可以轻松应对需求变化。</li>
+</ul>
+
+<h4>
+<a id="一什么是promise" class="anchor" href="#%E4%B8%80%E4%BB%80%E4%B9%88%E6%98%AFpromise" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>一、什么是promise</h4>
+
+<ul>
+<li>a.一个异步操作的最终结果</li>
+<li>b.交互方式：</li>
+</ul>
+
+<pre><code>promise.then(function(value){
+//then方法接收回调函数的类型可以是任意的js对象，包括promise对象本身，因此可以实现链式嵌套
+返回正确的promise对象
+}，function(err){
+//返回错误err对象
+})
+</code></pre>
+
+<p>类比Java中的一个</p>
+
+<pre><code>try(){
+
+}catch(Exception e){
+
+}方法
+</code></pre>
+
+<h3>
+<a id="二promise的状态" class="anchor" href="#%E4%BA%8Cpromise%E7%9A%84%E7%8A%B6%E6%80%81" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>二、promise的状态</h3>
+
+<ul>
+<li>a.pending(初始状态)</li>
+<li>b.fulfilled(成功执行)</li>
+<li>
+<p>c.reject(执行出错)</p>
+
+<p>pending状态可以转化到fulfilled和reject两种状态，即成功与失败，而fulfiled和reject两种状态不能转化成其他状态（且必须有一个identity不变的值）</p>
+</li>
+</ul>
+
+<h3>
+<a id="三then方法" class="anchor" href="#%E4%B8%89then%E6%96%B9%E6%B3%95" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>三、then方法</h3>
+
+<ul>
+<li>then方法可以接受两个参数</li>
+</ul>
+
+<pre><code>promise.then(onFulfilled,onReject)
+</code></pre>
+
+<pre><code>1.如果onFulfilled是一个函数，则其第一个参数为promise返回的value值，且其只能在promise进入fulfilled状态后被调用
+2.如果onReject是一个函数，则其第一个参数为promise返回的err reason值，且其只能在promise进入reject之后被调用
+</code></pre>
+
+<p>上述两种函数均不能多次调用,如果两个参数不是函数，则必须被忽略
+3.then方法可以被多次调用，即</p>
+
+<pre><code>promise.then().then().then()
+</code></pre>
+
+<hr>
+
+<p>例：(1)创建promise类</p>
+
+<pre><code>function runAsync(){ 7
+    var p = new Promise(function(resolve, reject){
+        //做一些异步操作
+        setTimeout(function(){
+            console.log('执行完成');
+            resolve('随便什么数据');
+        }, 2000);
+    });
+    return p;            
+}
+runAsync()
+</code></pre>
+
+<p>(2)调用then方法：</p>
+
+<pre><code>runAsync().then(function(data){
+    console.log(data);
+    //后面可以用传过来的数据做些其他操作
+    //......
+});
+</code></pre>
+
+<p>输出结果：</p>
+
+<h6>
+<a id="执行完成" class="anchor" href="#%E6%89%A7%E8%A1%8C%E5%AE%8C%E6%88%90" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>执行完成</h6>
+
+<h6>
+<a id="随便什么数据" class="anchor" href="#%E9%9A%8F%E4%BE%BF%E4%BB%80%E4%B9%88%E6%95%B0%E6%8D%AE" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>随便什么数据</h6>
+
+<p>(3)then方法的链式调用：</p>
+
+<pre><code>runAsync1()
+.then(function(data){
+    console.log(data);
+    return runAsync2();
+})
+.then(function(data){
+    console.log(data);
+    return runAsync3();
+})
+.then(function(data){
+    console.log(data);
+});
+</code></pre>
+
+<h3>
+<a id="四-catch方法与reject函数" class="anchor" href="#%E5%9B%9B-catch%E6%96%B9%E6%B3%95%E4%B8%8Ereject%E5%87%BD%E6%95%B0" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>四、 catch方法与reject函数</h3>
+
+<p>reject使得promise进入reject状态，可以捕获请求错误的原因</p>
+
+<p>例：</p>
+
+<pre><code>function getNumber(){
+    var p = new Promise(function(resolve, reject){
+        //做一些异步操作
+        setTimeout(function(){
+            var num = Math.ceil(Math.random()*10); //生成1-10的随机数
+            if(num&lt;=5){
+                resolve(num);
+            }
+            else{
+                reject('数字太大了');
+            }
+        }, 2000);
+    });
+    return p;            
+}
+</code></pre>
+
+<pre><code>getNumber()
+.then(
+    function(data){
+        console.log('resolved');
+        console.log(data);//两者是一致的；
+    }, 
+    function(reason, data){
+        console.log('rejected');
+        console.log(reason);
+console.log(data);//什么结果？
+    }
+);
+</code></pre>
+
+<p>返回结果为数字或者'数字太大了'</p>
+
+<p>Catch方法与reject相似，只不过catch方法可以捕获代码中的异常，防止js运行过程中报错而中止进程</p>
+
+<h3>
+<a id="五all方法与race方法以函数运行速度决定结果" class="anchor" href="#%E4%BA%94all%E6%96%B9%E6%B3%95%E4%B8%8Erace%E6%96%B9%E6%B3%95%E4%BB%A5%E5%87%BD%E6%95%B0%E8%BF%90%E8%A1%8C%E9%80%9F%E5%BA%A6%E5%86%B3%E5%AE%9A%E7%BB%93%E6%9E%9C" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>五、all方法与race方法——以函数运行速度决定结果</h3>
+
+<ul>
+<li>1.all方法</li>
+</ul>
+
+<pre><code>promise.all(f1,f2,f3).then()
+</code></pre>
+
+<p>只有当所有的f1,f2,f3都执行完毕后才运行then方法，也就是取决于执行速度最慢的那个函数——在浏览器中一般会加载完所有的资源(图片、文字)才会刷新整个页面 </p>
+
+<p>2.race方法</p>
+
+<pre><code>promise.race(f1,f2,f3).then()
+</code></pre>
+
+<p>只要f1,f2,f3中有一个执行完毕，then方法就会被触发——一般用于资源请求超时处理</p>
+
+<h3>
+<a id="六jquery中的promise" class="anchor" href="#%E5%85%ADjquery%E4%B8%AD%E7%9A%84promise" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>六、jQuery中的promise</h3>
+
+<ul>
+<li> (1)$.Deferred()对象</li>
+</ul>
+
+<pre><code>function runAsync(){
+    var def = $.Deferred();
+    //做一些异步操作
+    setTimeout(function(){
+        console.log('执行完成');
+        def.resolve('随便什么数据');
+    }, 2000);
+    return def;
+}
+runAsync().then(function(data){
+    console.log(data)
+});
+</code></pre>
+
+<p>相当于将原来定义promise的过程封装了一下，def就相当于上述代码中的p,def无需传入resolve和reject，而是本身就具有这两个方法，可以直接调用。但是这样会有代码被篡改结果的风险，于是加入限制方法def.promise,这样def就不具有resolve和reject方法了</p>
+
+<p>deferred同样可以调用then方法及链式法则，并且deffred的then方法得到了增强：</p>
+
+<pre><code>defferd.then(donefilter,failfilter,progressfilter（肯定会执行）)//----接收pending状态的回调函数
+</code></pre>
+
+<ul>
+<li>done与fail方法</li>
+</ul>
+
+<p>done()与then方法成功执行的状态对应，fail()与失败状态对应</p>
+
+<ul>
+<li>(2)$.when()对象
+相当于promise.all()方法</li>
+</ul>
+
+<p>区别：</p>
+
+<pre><code>Promise
+.all([runAsync1(), runAsync2(), runAsync3()])
+.then(function(results){
+    console.log(results);
+});
+</code></pre>
+
+<hr>
+
+<pre><code>$.when(runAsync(), runAsync2(), runAsync3())
+.then(function(data1, data2, data3){
+    console.log('全部执行完成');
+    console.log(data1, data2, data3);
+});//输出与all方法区别
+</code></pre>
+
+<p>(3)ajax与deffered关系</p>
+
+<p>jquery的ajax返回一个受限的Deferred对象，具有deferred对象的所有性质，所以可以采用链式法则，例如：</p>
+
+<pre><code>req1 = function(){
+    return $.ajax(/*...*/);
+}
+req2 = function(){
+    return $.ajax(/*...*/);
+}
+req3 = function(){
+    return $.ajax(/*...*/);
+}
+
+req1().then(req2).then(req3).done(function(){
+    console.log('请求发送完毕');
+});
+</code></pre>
+
+<p>其实这也就是ajax返回对象的实质</p>
+
+<ul>
+<li>(4) success、error与complete
+分别对应done、fail、always(持续运行)方法</li>
+</ul>
+
+<p>例：</p>
+
+<pre><code>$.ajax(/*...*/)
+.success(function(){/*...*/})
+.error(function(){/*...*/})
+.complete(function(){/*...*/})
+</code></pre>
+
+<h3>
+<a id="七promise的解析过程" class="anchor" href="#%E4%B8%83promise%E7%9A%84%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>七、promise的解析过程</h3>
+
+<p>探究</p>
+
+<ul>
+<li>参考文献：</li>
+</ul>
+
+<p>大白话讲解Promise（一）<a href="http://www.cnblogs.com/lvdabao/p/es6-promise-1.html">http://www.cnblogs.com/lvdabao/p/es6-promise-1.html</a></p>
+
+<p>Promise/A+规范----<a href="https://segmentfault.com/a/1190000002452115">https://segmentfault.com/a/1190000002452115</a></p>
+
+<p>大白话讲解Promise（三）搞懂jquery中的Promise--<a href="http://www.cnblogs.com/lvdabao/p/jquery-deferred.html">http://www.cnblogs.com/lvdabao/p/jquery-deferred.html</a></p>
+
+      <footer class="site-footer">
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
